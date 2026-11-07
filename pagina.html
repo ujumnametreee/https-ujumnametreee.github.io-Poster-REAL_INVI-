@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Real Invi | Afiche del partido</title>
+
+  <script>
+    // Rutas de las imágenes, relativas a la carpeta de pagina.html.
+    const imagenes = {
+      encabezado: "Encabezadodef.png",
+      local: "escudo.png",
+      visitante: "rival.png",
+      cancha: "Cancha.png"
+    };
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #0c131a;
+      color: #f6f7f8;
+      font-family: Arial, sans-serif;
+    }
+
+    .editor {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .panel {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px;
+      background: #17232d;
+      border-right: 1px solid #35414b;
+    }
+
+    .panel h1 {
+      margin: 0 0 24px;
+      font-size: 23px;
+    }
+
+    .panel label {
+      display: block;
+      margin: 15px 0 6px;
+      color: #e7c596;
+      font-size: 14px;
+    }
+
+    .panel input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #465663;
+      border-radius: 6px;
+      background: #0d1820;
+      color: white;
+      font: inherit;
+    }
+
+    .panel input[type="file"] {
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    .panel button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      border: 0;
+      border-radius: 6px;
+      background: #ffda00;
+      color: #111820;
+      font: inherit;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .panel .secundario {
+      background: #314553;
+      color: white;
+    }
+
+    .panel button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .panel p {
+      color: #bcc8d1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    :focus-visible {
+      outline: 3px solid #efc38a;
+      outline-offset: 3px;
+    }
+
+    .vista {
+      display: grid;
+      justify-items: center;
+      align-content: start;
+      padding: 24px;
+    }
+
+    #afiche {
+      display: block;
+      width: min(100%, 800px);
+      height: auto;
+    }
+
+    /* El afiche completo se ajusta a la pantalla para la captura. */
+    .modo-captura {
+      overflow: hidden;
+    }
+
+    .modo-captura .panel {
+      display: none;
+    }
+
+    .modo-captura .vista {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+      place-items: stretch;
+      padding: 0;
+      background: #000;
+    }
+
+    .modo-captura #afiche {
+      width: 100%;
+      height: 100%;
+    }
+
+    @media (max-width: 720px) {
+      .editor {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel {
+        position: static;
+        height: auto;
+        border-right: 0;
+      }
+
+      .vista {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="editor">
+    <aside class="panel">
+      <h1>Editar partido</h1>
+
+      <label for="local">Equipo local</label>
+      <input id="local" data-texto="nombre-local" value="REAL INVI">
+
+      <label for="visitante">Equipo visitante</label>
+      <input id="visitante" data-texto="nombre-visitante" value="EQUIPO RIVAL">
+
+      <!-- Selector del escudo visitante -->
+      <label for="archivo-rival">Escudo visitante</label>
+      <input
+        id="archivo-rival"
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+      >
+
+      <label for="archivos-afiche">Imágenes del afiche</label>
+      <input
+        id="archivos-afiche"
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        multiple
+      >
+      <p>Si abriste la página con doble clic, seleccioná aquí Encabezado.png, escudo.png y Cancha.png para poder descargarlas.</p>
+
+      <label for="lema">Lema del equipo</label>
+      <input id="lema" data-texto="lema-afiche" value="SOMOS REAL INIVI">
+
+      <label for="turno">Turno</label>
+      <input id="turno" data-texto="turno-afiche" value="SEGUNDA HORA">
+
+      <label for="hora">Hora</label>
+      <input id="hora" data-texto="hora-afiche" value="6:30 p. m.">
+
+      <label for="frase">Frase al pie</label>
+      <input
+        id="frase"
+        data-texto="frase-afiche"
+        value="MÁS QUE UN EQUIPO, UNA FAMILIA"
+      >
+
+      <button id="captura" type="button">Vista para captura</button>
+      <button id="descargar" class="secundario" type="button">
+        Descargar PNG
+      </button>
+
+      <p>Para volver de la vista de captura, tocá el afiche o presioná Esc.</p>
+      <p id="estado" role="status"></p>
+    </aside>
+
+    <section class="vista" aria-label="Vista previa">
+      <svg
+        id="afiche"
+        xmlns="http://www.w3.org/2000/svg"
+        width="1122"
+        height="1402"
+        viewBox="0 0 1122 1402"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="Afiche del partido"
+      >
+        <defs>
+          <radialGradient id="azul">
+            <stop offset="0" stop-color="#082538"/>
+            <stop offset="1" stop-color="#000e19"/>
+          </radialGradient>
+
+          <linearGradient id="entrada" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="black"/>
+            <stop offset="48%" stop-color="white"/>
+          </linearGradient>
+
+          <mask
+            id="fundido"
+            maskUnits="userSpaceOnUse"
+            x="0" y="735"
+            width="1122" height="667"
+          >
+            <rect x="0" y="735" width="1122" height="667" fill="url(#entrada)"/>
+          </mask>
+
+          <linearGradient id="pie" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#000b15" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#000b15" stop-opacity=".93"/>
+          </linearGradient>
+
+          <filter id="sombra" x="-15%" y="-30%" width="130%" height="175%">
+            <feDropShadow
+              dx="0" dy="4" stdDeviation="4"
+              flood-color="black" flood-opacity=".8"
+            />
+          </filter>
+        </defs>
+
+        <rect width="1122" height="1402" fill="url(#azul)"/>
+
+        <!-- Foto de la cancha -->
+        <image
+          data-imagen="cancha"
+          x="0" y="735"
+          width="1122" height="667"
+          preserveAspectRatio="xMidYMid slice"
+          mask="url(#fundido)"
+        />
+
+        <!-- Encabezado completo, con margen superior para la corona -->
+        <image
+          data-imagen="encabezado"
+          x="0" y="24"
+          width="1122" height="484"
+          preserveAspectRatio="xMidYMin meet"
+        />
+
+        <!-- Escudo local: su ruta se configura al inicio del HTML -->
+        <image
+          data-imagen="local"
+          x="206" y="515"
+          width="294" height="309"
+          preserveAspectRatio="xMidYMid meet"
+        />
+
+        <!-- Escudo visitante: se puede elegir desde el panel -->
+        <image
+          id="escudo-visitante"
+          data-imagen="visitante"
+          x="637" y="525"
+          width="251" height="302"
+          preserveAspectRatio="xMidYMid meet"
+        />
+
+        <path
+          d="M538 640H582 M538 734H582"
+          stroke="#e1b47b"
+          stroke-width="2"
+        />
+
+        <text
+          x="561" y="705"
+          text-anchor="middle"
+          fill="#edbf84"
+          font-family="Impact, Arial Narrow, sans-serif"
+          font-size="46"
+          textLength="48"
+          lengthAdjust="spacingAndGlyphs"
+        >VS</text>
+
+        <g
+          fill="white"
+          text-anchor="middle"
+          filter="url(#sombra)"
+          font-family="Impact, Arial Narrow, sans-serif"
+          letter-spacing="5"
+        >
+          <text
+            id="nombre-local"
+            x="353" y="872"
+            font-size="44"
+            textLength="228"
+            lengthAdjust="spacingAndGlyphs"
+          >REAL INVI</text>
+
+          <text
+            id="nombre-visitante"
+            x="766" y="872"
+            font-size="44"
+            textLength="258"
+            lengthAdjust="spacingAndGlyphs"
+          >EQUIPO RIVAL</text>
+
+          <text
+            id="lema-afiche"
+            x="561" y="948"
+            font-size="54"
+            textLength="452"
+            lengthAdjust="spacingAndGlyphs"
+          >SOMOS REAL INIVI</text>
+        </g>
+
+        <path
+          d="M249 928H317 M803 928H870"
+          stroke="#e7bf89"
+          stroke-width="4"
+        />
+
+        <rect y="1190" width="1122" height="212" fill="url(#pie)"/>
+        <rect x="66" y="1248" width="17" height="17" fill="#e7c596"/>
+        <path d="M98 1258H469" stroke="#d8b885" stroke-width="1.5"/>
+        <path d="M535 1271V1340" stroke="#e7c596" stroke-width="4"/>
+
+        <g
+          fill="white"
+          filter="url(#sombra)"
+          font-family="Impact, Arial Narrow, sans-serif"
+          font-size="68"
+        >
+          <text
+            id="turno-afiche"
+            x="66" y="1334"
+            textLength="440"
+            lengthAdjust="spacingAndGlyphs"
+          >SEGUNDA HORA</text>
+
+          <text
+            id="hora-afiche"
+            x="567" y="1334"
+            textLength="276"
+            lengthAdjust="spacingAndGlyphs"
+          >6:30 p. m.</text>
+        </g>
+
+        <text
+          id="frase-afiche"
+          x="68" y="1367"
+          fill="#edbf84"
+          font-family="Arial Narrow, Arial, sans-serif"
+          font-size="22"
+          letter-spacing="4"
+          textLength="463"
+          lengthAdjust="spacingAndGlyphs"
+        >MÁS QUE UN EQUIPO, UNA FAMILIA</text>
+      </svg>
+    </section>
+  </main>
+
+  <script>
+    const afiche = document.getElementById("afiche");
+    const estado = document.getElementById("estado");
+    const descargar = document.getElementById("descargar");
+    const captura = document.getElementById("captura");
+    const selectorRival = document.getElementById("archivo-rival");
+    const selectorImagenes = document.getElementById("archivos-afiche");
+    const escudoRival = document.getElementById("escudo-visitante");
+
+    // Coloca las imágenes configuradas al inicio del archivo.
+    afiche.querySelectorAll("[data-imagen]").forEach(elemento => {
+      const ruta = imagenes[elemento.dataset.imagen];
+      if (ruta) elemento.setAttribute("href", ruta);
+    });
+
+    // Si todavía no tenés rival.png, podés elegir el escudo desde el panel.
+    escudoRival.addEventListener("error", () => {
+      if (escudoRival.getAttribute("href") === imagenes.visitante) {
+        escudoRival.removeAttribute("href");
+      }
+    });
+
+    // Actualiza los textos del afiche mientras escribís.
+    document.querySelectorAll("[data-texto]").forEach(campo => {
+      campo.addEventListener("input", () => {
+        const texto = document.getElementById(campo.dataset.texto);
+        texto.textContent = campo.value;
+      });
+    });
+
+    function leerArchivo(archivo) {
+      return new Promise((resolver, rechazar) => {
+        const lector = new FileReader();
+        lector.onload = () => resolver(lector.result);
+        lector.onerror = () => rechazar(new Error("No se pudo leer el archivo."));
+        lector.readAsDataURL(archivo);
+      });
+    }
+
+    selectorImagenes.addEventListener("change", async () => {
+      const archivos = Array.from(selectorImagenes.files);
+      if (!archivos.length) return;
+
+      const nombresImagenes = {
+        "encabezado.png": "encabezado",
+        "escudo.png": "local",
+        "cancha.png": "cancha",
+        "rival.png": "visitante"
+      };
+
+      selectorImagenes.disabled = true;
+      estado.textContent = "Cargando las imágenes…";
+
+      try {
+        let cargadas = 0;
+        for (const archivo of archivos) {
+          const nombre = nombresImagenes[archivo.name.toLowerCase()];
+          if (!nombre) continue;
+
+          const elemento = afiche.querySelector(`[data-imagen="${nombre}"]`);
+          elemento.setAttribute("href", await leerArchivo(archivo));
+          cargadas++;
+        }
+
+        estado.textContent = cargadas
+          ? `${cargadas} imagen(es) lista(s) para descargar.`
+          : "No se encontraron nombres reconocidos. Seleccioná Encabezado.png, escudo.png y Cancha.png.";
+      } catch (error) {
+        estado.textContent = error.message;
+      } finally {
+        selectorImagenes.disabled = false;
+      }
+    });
+
+    // Cambia únicamente el escudo visitante.
+    selectorRival.addEventListener("change", async () => {
+      const archivo = selectorRival.files[0];
+      if (!archivo) return;
+
+      selectorRival.disabled = true;
+      descargar.disabled = true;
+      captura.disabled = true;
+      estado.textContent = "Cargando el escudo visitante…";
+
+      try {
+        const datos = await leerArchivo(archivo);
+        const imagen = new Image();
+        imagen.src = datos;
+        await imagen.decode();
+
+        escudoRival.setAttribute("href", datos);
+        estado.textContent = "Escudo visitante actualizado.";
+      } catch {
+        estado.textContent = "No se pudo abrir esa imagen. Probá con un PNG, JPG o WebP.";
+      } finally {
+        selectorRival.disabled = false;
+        descargar.disabled = false;
+        captura.disabled = false;
+      }
+    });
+
+    // Vista limpia para tomar una captura.
+    captura.addEventListener("click", () => {
+      document.body.classList.add("modo-captura");
+      window.scrollTo(0, 0);
+    });
+
+    function volverAlEditor() {
+      if (document.body.classList.contains("modo-captura")) {
+        document.body.classList.remove("modo-captura");
+        captura.focus();
+      }
+    }
+
+    afiche.addEventListener("click", volverAlEditor);
+
+    document.addEventListener("keydown", evento => {
+      if (evento.key === "Escape") volverAlEditor();
+    });
+
+    // Integra las imágenes de la carpeta en la copia que se descarga.
+    // El escudo seleccionado ya está incluido como datos de imagen.
+    async function incluirImagen(elemento) {
+      const ruta = elemento.getAttribute("href");
+      if (!ruta || ruta.startsWith("data:")) return;
+
+      const respuesta = await fetch(ruta);
+      if (!respuesta.ok) throw new Error("Revisá la ruta de " + ruta);
+
+      const archivo = await respuesta.blob();
+      const datos = await leerArchivo(archivo);
+      elemento.setAttribute("href", datos);
+    }
+
+    descargar.addEventListener("click", async () => {
+      descargar.disabled = true;
+      selectorRival.disabled = true;
+      selectorImagenes.disabled = true;
+      estado.textContent = "Preparando el afiche…";
+
+      try {
+        const copia = afiche.cloneNode(true);
+        const imagenesDelAfiche = Array.from(copia.querySelectorAll("image"));
+        await Promise.all(imagenesDelAfiche.map(incluirImagen));
+
+        const dibujo = new XMLSerializer().serializeToString(copia);
+        const imagen = new Image();
+        imagen.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(dibujo);
+        await imagen.decode();
+
+        const lienzo = document.createElement("canvas");
+        lienzo.width = 1122;
+        lienzo.height = 1402;
+        lienzo.getContext("2d").drawImage(imagen, 0, 0);
+
+        const png = await new Promise(resolver => {
+          lienzo.toBlob(resolver, "image/png");
+        });
+
+        if (!png) throw new Error("No se pudo generar el PNG.");
+
+        const direccion = URL.createObjectURL(png);
+        const enlace = document.createElement("a");
+        enlace.href = direccion;
+        enlace.download = "afiche-real-invi.png";
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+
+        setTimeout(() => URL.revokeObjectURL(direccion), 30000);
+        estado.textContent = "PNG listo.";
+      } catch (error) {
+        estado.textContent = location.protocol === "file:"
+          ? "Seleccioná las imágenes en “Imágenes del afiche” o abrí la página con Live Server para descargar el PNG."
+          : error.message;
+      } finally {
+        descargar.disabled = false;
+        selectorRival.disabled = false;
+        selectorImagenes.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

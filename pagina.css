@@ -1,0 +1,146 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0c131a;
+  color: #f6f7f8;
+  font-family: Arial, sans-serif;
+}
+
+.editor {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.panel {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 24px;
+  background: #17232d;
+  border-right: 1px solid #35414b;
+}
+
+.panel h1 {
+  margin: 0 0 24px;
+  font-size: 23px;
+}
+
+.panel label {
+  display: block;
+  margin: 14px 0 6px;
+  color: #e7c596;
+  font-size: 14px;
+}
+
+.panel input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #465663;
+  border-radius: 6px;
+  background: #0d1820;
+  color: white;
+  font: inherit;
+}
+
+.panel button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #ffda00;
+  color: #111820;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.panel .secundario {
+  background: #314553;
+  color: white;
+}
+
+.panel button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.panel p {
+  color: #bcc8d1;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vista {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: 24px;
+}
+
+#afiche {
+  display: block;
+  width: min(100%, 800px);
+  height: auto;
+}
+
+/* Vista limpia para tomar el screenshot. */
+.modo-captura .panel {
+  display: none;
+}
+
+.modo-captura .editor {
+  display: block;
+}
+
+.modo-captura .vista {
+  min-height: 100dvh;
+  padding: 0;
+  place-content: center;
+  background: #000;
+}
+
+.modo-captura #afiche {
+  width: min(100vw, calc(100dvh * 1122 / 1402));
+}
+
+@media (max-width: 720px) {
+  .editor {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel {
+    position: static;
+    height: auto;
+    border-right: 0;
+  }
+
+  .vista {
+    padding: 12px;
+  }
+}
+body.modo-captura .vista {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-content: stretch;
+  place-items: stretch;
+  min-height: 0;
+  padding: 0;
+  background: #000;
+}
+
+body.modo-captura #afiche {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+}
